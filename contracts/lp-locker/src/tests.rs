@@ -2612,6 +2612,22 @@ fn create_lock_rejects_duration_one_second_over_maximum() {
     // MAX_LOCK_DURATION = 315_360_000 (10 years)
     let unlock_at = now + 315_360_001; // One second over maximum
 
+// ── Issue #906: Emergency pause / unpause ──────────────────────────────────────
+
+#[test]
+fn pause_blocks_create_lock_with_contract_paused_error() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    client.init(&admin);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    client.pause();
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
     let result = client.try_create_lock(
         &creator,
         &pool_share_id,
@@ -2619,6 +2635,7 @@ fn create_lock_rejects_duration_one_second_over_maximum() {
         &token_a,
         &token_b,
         &100_i128,
+        &500_i128,
         &beneficiary,
         &unlock_at,
         &None,
@@ -2724,6 +2741,24 @@ fn create_lock_rate_limit_accepts_exactly_at_cooldown() {
 
     // Exactly RATE_LIMIT_COOLDOWN (60s) after the first call must succeed.
     advance_time(&env, 60);
+    assert_eq!(result, Err(Ok(ContractError::ContractPaused)));
+}
+
+#[test]
+fn unpause_restores_create_lock() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    client.init(&admin);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    client.pause();
+    client.unpause();
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
     let lock_id = client.create_lock(
         &creator,
         &pool_share_id,
@@ -2844,4 +2879,43 @@ fn create_lock_accepts_vesting_start_exactly_at_unlock_at() {
         client.get_lock(&lock_id).is_some(),
         "vesting start exactly at unlock_at should be allowed"
     );
+        &500_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    let lock = client.get_lock(&lock_id).expect("lock exists after unpause");
+    assert_eq!(lock.amount, 500_i128);
+}
+
+#[test]
+fn non_admin_cannot_pause() {
+    let env = Env::default();
+    let contract_id = env.register(LpLocker, ());
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+
+    env.mock_auths(&[soroban_sdk::testutils::MockAuth {
+        address: &admin,
+        invoke: &soroban_sdk::testutils::MockAuthInvoke {
+            contract: &contract_id,
+            fn_name: "init",
+            args: soroban_sdk::vec![&env, admin.into_val(&env)],
+            sub_invokes: &[],
+        },
+    }]);
+    client.init(&admin);
+
+    // No auths are mocked for this call, so the real admin's require_auth()
+    // inside `pause` cannot be satisfied and the call must panic rather than
+    // silently succeed for whoever happens to invoke it.
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let env2 = env.clone();
+        let c2 = LpLockerClient::new(&env2, &contract_id);
+        c2.pause()
+    }));
+    assert!(result.is_err(), "pause without admin auth must panic");
 }
