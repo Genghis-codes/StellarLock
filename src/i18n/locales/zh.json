@@ -23,7 +23,9 @@
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
     "history": "历史",
-    "analytics": "分析"
+    "analytics": "分析",
+    "mainNavigation": "主导航",
+    "mobileNavigation": "移动端导航"
   },
   "landing": {
     "badge": "基于 Stellar 构建 · Soroban 智能合约",
@@ -99,10 +101,11 @@
     "metadataTitle": "项目信息（可选）",
     "metadataDesc": "显示在锁定的详细页面和浏览器上，以便社区验证谁锁定了此项目。",
     "description": "描述",
-    "descriptionPlaceholder": "这个锁定是为了什么？",
+    "descriptionPlaceholder": "为何创建此锁定？（例如：团队代币锁定 2 年）",
     "projectUrl": "项目网址",
     "logoUrl": "Logo 网址",
-    "approving": "授权中…"
+    "approving": "授权中…",
+    "openAddressBook": "打开地址簿"
   },
   "lpForm": {
     "dex": "DEX",
@@ -127,7 +130,13 @@
     "insufficientBalance": "余额不足。你有 {{balance}}，但需要 {{amount}}。",
     "needsApproval": "在锁定之前，你需要授权合约转移你的 LP 代币。",
     "approveAndContinue": "授权并继续",
-    "approving": "授权中…"
+    "approving": "授权中…",
+    "openAddressBook": "打开地址簿",
+    "beneficiaryHint": "留空则使用已连接的钱包作为受益人。",
+    "description": "描述",
+    "descriptionPlaceholder": "为何创建此锁定？（例如：流动性锁定 2 年）",
+    "projectUrl": "项目网址",
+    "logoUrl": "Logo 网址"
   },
   "myLocks": {
     "title": "我的锁定",
@@ -599,6 +608,7 @@
   "rpcStatus": {
     "unreachable": "Stellar 网络无法访问。部分功能可能不可用…",
     "slow": "网络连接缓慢。响应时间可能比平时更长。"
+  },
   "qrCode": {
     "shareLockAria": "通过二维码分享锁定",
     "closeAria": "关闭二维码弹窗",
@@ -617,6 +627,7 @@
   "verifiedBadge": {
     "verifiedTitle": "已验证代币 — 已列入 StellarLock 社区白名单",
     "unverifiedTitle": "未验证代币 — 不在社区白名单中。请谨慎操作。"
+  },
   "addressBook": {
     "title": "地址簿",
     "close": "关闭地址簿",
@@ -648,6 +659,7 @@
     "linearVestingEnabled": "已启用线性归属",
     "insufficientBalance": "余额不足。",
     "approvalRequired": "需要授权"
+  },
   "settings": {
     "title": "设置",
     "addressBook": "地址簿",
@@ -660,5 +672,12 @@
     "exportJson": "导出为 JSON",
     "importJson": "从 JSON 导入",
     "searchPlaceholder": "按标签或地址搜索…"
+  },
+  "breadcrumb": {
+    "ariaLabel": "面包屑导航"
+  },
+  "lockTable": {
+    "select": "选择",
+    "actions": "操作"
   }
 }

@@ -2631,4 +2631,463 @@ fn verify_pool_tokens_accepts_pool_without_getters() {
         verify_pool_tokens(&env, &pool_share_id, &token_a, &token_b),
         Ok(())
     );
+// ── extend MAX_EXTENSIONS boundary (#910) ────────────────────────────────────
+
+#[test]
+fn extend_respects_max_extensions_boundary() {
+// ── Issue #908: create_lock duration and rate-limit boundaries ────────────────
+
+#[test]
+fn create_lock_rejects_duration_one_second_short_of_minimum() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let mut unlock_at = env.ledger().timestamp() + 100_000;
+    let lock_id = client.create_lock(
+    let now = env.ledger().timestamp();
+    // MIN_LOCK_DURATION = 86_400 (24 hours)
+    let unlock_at = now + 86_399; // One second short of minimum
+
+    let result = client.try_create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    // MAX_EXTENSIONS is 52 — exhaust every allowed extension.
+    for _ in 0..52 {
+        unlock_at += 1_000;
+        client.extend(&lock_id, &unlock_at);
+    }
+
+    let lock = client.get_lock(&lock_id).unwrap();
+    assert_eq!(lock.extended_count, 52);
+    assert_eq!(lock.unlock_at, unlock_at);
+
+    // The 53rd extension must be rejected even though it would otherwise be valid.
+    unlock_at += 1_000;
+    let result = client.try_extend(&lock_id, &unlock_at);
+    assert_eq!(result, Err(Ok(ContractError::ExtensionLimitExceeded)));
+
+    // The lock must be untouched by the rejected attempt.
+    let lock = client.get_lock(&lock_id).unwrap();
+    assert_eq!(lock.extended_count, 52);
+}
+
+// ── TotalLocked decrease on withdraw (#909) ───────────────────────────────────
+
+#[test]
+fn withdraw_decreases_total_locked_by_exact_amount() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+    assert_eq!(result, Err(Ok(ContractError::LockDurationTooShort)));
+}
+
+#[test]
+fn create_lock_accepts_duration_at_minimum() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let now = env.ledger().timestamp();
+    // MIN_LOCK_DURATION = 86_400 (24 hours)
+    let unlock_at = now + 86_400; // Exactly at minimum
+
+    let lock_id = client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    assert!(client.get_lock(&lock_id).is_some(), "lock at minimum duration should succeed");
+}
+
+#[test]
+fn create_lock_rejects_duration_one_second_over_maximum() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let now = env.ledger().timestamp();
+    // MAX_LOCK_DURATION = 315_360_000 (10 years)
+    let unlock_at = now + 315_360_001; // One second over maximum
+
+// ── Issue #906: Emergency pause / unpause ──────────────────────────────────────
+
+#[test]
+fn pause_blocks_create_lock_with_contract_paused_error() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    client.init(&admin);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    client.pause();
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+    let result = client.try_create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &500_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+    assert_eq!(result, Err(Ok(ContractError::LockDurationTooLong)));
+}
+
+#[test]
+fn create_lock_accepts_duration_at_maximum() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let now = env.ledger().timestamp();
+    // MAX_LOCK_DURATION = 315_360_000 (10 years)
+    let unlock_at = now + 315_360_000; // Exactly at maximum
+
+    let lock_id = client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &700_i128,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    let before = client.get_total_locked(&pool_share_id);
+    assert_eq!(before, 700_i128);
+
+    advance_time(&env, 200_000);
+    client.withdraw(&lock_id);
+
+    let after = client.get_total_locked(&pool_share_id);
+    assert_eq!(
+        before - after,
+        700_i128,
+        "TotalLocked must decrease by exactly the withdrawn amount"
+    );
+    assert_eq!(after, 0_i128);
+}
+
+// ── Re-entrancy guard (#904) ──────────────────────────────────────────────────
+
+#[test]
+fn withdraw_rejects_reentrant_call_via_guard() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    assert!(client.get_lock(&lock_id).is_some(), "lock at maximum duration should succeed");
+}
+
+#[test]
+fn create_lock_rate_limit_rejects_one_second_before_cooldown_elapses() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 5_000);
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+
+    client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    // RATE_LIMIT_COOLDOWN = 60s — one second short of the cooldown must still
+    // be rejected.
+    advance_time(&env, 59);
+    let result = client.try_create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &(env.ledger().timestamp() + 100_000),
+        &None,
+        &empty_metadata(&env),
+    );
+    assert_eq!(result, Err(Ok(ContractError::RateLimitExceeded)));
+}
+
+#[test]
+fn create_lock_rate_limit_accepts_exactly_at_cooldown() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 5_000);
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+
+    client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    // Exactly RATE_LIMIT_COOLDOWN (60s) after the first call must succeed.
+    advance_time(&env, 60);
+    assert_eq!(result, Err(Ok(ContractError::ContractPaused)));
+}
+
+#[test]
+fn unpause_restores_create_lock() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    client.init(&admin);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    client.pause();
+    client.unpause();
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+    let lock_id = client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &(env.ledger().timestamp() + 100_000),
+        &None,
+        &empty_metadata(&env),
+    );
+    assert!(
+        client.get_lock(&lock_id).is_some(),
+        "lock exactly at the cooldown boundary should succeed"
+    );
+}
+
+// ── Issue #907: validate_vesting_bounds edge cases ─────────────────────────────
+
+#[test]
+fn create_lock_accepts_vesting_start_exactly_at_created_at() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let now = env.ledger().timestamp();
+    let unlock_at = now + 100_000;
+    let vesting = Vesting {
+        start: now, // exactly at created_at — must be allowed
+        end: now + 1,
+        released: 0,
+    };
+
+    let lock_id = client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Aquarius,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &Some(vesting),
+        &empty_metadata(&env),
+    );
+    assert!(
+        client.get_lock(&lock_id).is_some(),
+        "vesting start exactly at created_at should be allowed"
+    );
+}
+
+#[test]
+fn create_lock_rejects_vesting_start_one_second_before_created_at() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let now = env.ledger().timestamp();
+    let unlock_at = now + 100_000;
+    let vesting = Vesting {
+        start: now - 1, // one second before created_at — must be rejected
+        end: now + 1,
+        released: 0,
+    };
+
+    let result = client.try_create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Aquarius,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &Some(vesting),
+        &empty_metadata(&env),
+    );
+    assert_eq!(result, Err(Ok(ContractError::VestingOutsideLockBounds)));
+}
+
+#[test]
+fn create_lock_accepts_vesting_start_exactly_at_unlock_at() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let now = env.ledger().timestamp();
+    let unlock_at = now + 100_000;
+    let vesting = Vesting {
+        start: unlock_at, // exactly at unlock_at — must be allowed
+        end: unlock_at + 1,
+        released: 0,
+    };
+
+    let lock_id = client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Aquarius,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &Some(vesting),
+        &empty_metadata(&env),
+    );
+    assert!(
+        client.get_lock(&lock_id).is_some(),
+        "vesting start exactly at unlock_at should be allowed"
+    );
+        &500_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    advance_time(&env, 200_000);
+
+    // Simulate re-entrancy by holding the guard before invoking a guarded entry point.
+    env.as_contract(&contract_id, || {
+        env.storage()
+            .temporary()
+            .set(&crate::DataKey::ReentrancyGuard, &true);
+    });
+
+    let result = client.try_withdraw(&lock_id);
+    assert_eq!(result, Err(Ok(ContractError::ReentrancyDetected)));
+
+    // The lock must remain untouched: the guard rejected the call before any state change.
+    let lock = client.get_lock(&lock_id).unwrap();
+    assert!(!lock.withdrawn);
+    let lock = client.get_lock(&lock_id).expect("lock exists after unpause");
+    assert_eq!(lock.amount, 500_i128);
+}
+
+#[test]
+fn non_admin_cannot_pause() {
+    let env = Env::default();
+    let contract_id = env.register(LpLocker, ());
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+
+    env.mock_auths(&[soroban_sdk::testutils::MockAuth {
+        address: &admin,
+        invoke: &soroban_sdk::testutils::MockAuthInvoke {
+            contract: &contract_id,
+            fn_name: "init",
+            args: soroban_sdk::vec![&env, admin.into_val(&env)],
+            sub_invokes: &[],
+        },
+    }]);
+    client.init(&admin);
+
+    // No auths are mocked for this call, so the real admin's require_auth()
+    // inside `pause` cannot be satisfied and the call must panic rather than
+    // silently succeed for whoever happens to invoke it.
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let env2 = env.clone();
+        let c2 = LpLockerClient::new(&env2, &contract_id);
+        c2.pause()
+    }));
+    assert!(result.is_err(), "pause without admin auth must panic");
 }

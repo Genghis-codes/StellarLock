@@ -23,7 +23,9 @@
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "history": "Historial",
-    "analytics": "Analítica"
+    "analytics": "Analítica",
+    "mainNavigation": "Navegación principal",
+    "mobileNavigation": "Navegación móvil"
   },
   "landing": {
     "badge": "Construido en Stellar · Contratos inteligentes Soroban",
@@ -99,10 +101,11 @@
     "metadataTitle": "Información del proyecto (opcional)",
     "metadataDesc": "Se muestra en la página de detalle y explorador del bloqueo para que tu comunidad pueda verificar quién lo creó.",
     "description": "Descripción",
-    "descriptionPlaceholder": "¿Para qué es este bloqueo?",
+    "descriptionPlaceholder": "¿Por qué se crea este bloqueo? (ej. Tokens de equipo bloqueados por 2 años)",
     "projectUrl": "URL del proyecto",
     "logoUrl": "URL del logo",
-    "approving": "Aprobando…"
+    "approving": "Aprobando…",
+    "openAddressBook": "Abrir libreta de direcciones"
   },
   "lpForm": {
     "dex": "DEX",
@@ -127,7 +130,13 @@
     "insufficientBalance": "Saldo insuficiente. Tienes {{balance}} pero necesitas {{amount}}.",
     "needsApproval": "Necesitas aprobar el contrato para transferir tus tokens LP antes de bloquear.",
     "approveAndContinue": "Aprobar y continuar",
-    "approving": "Aprobando…"
+    "approving": "Aprobando…",
+    "openAddressBook": "Abrir libreta de direcciones",
+    "beneficiaryHint": "Deja en blanco para usar tu billetera conectada como beneficiario.",
+    "description": "Descripción",
+    "descriptionPlaceholder": "¿Por qué se crea este bloqueo? (ej. Liquidez bloqueada por 2 años)",
+    "projectUrl": "URL del proyecto",
+    "logoUrl": "URL del logo"
   },
   "myLocks": {
     "title": "Mis bloqueos",
@@ -222,11 +231,11 @@
     "noLocksDesc": "No pudimos encontrar bloqueos para <1>{{query}}</1>. Verifica el símbolo del token o la dirección del contrato, o crea el primer bloqueo para este token.",
     "createLock": "Crear un bloqueo",
     "badge": {
-      "title": "Bloqueado en StellarLock",
+      "title": "Bloqueado con StellarLock",
       "summary": "{{count}} bloqueo activo · {{value}} asegurado",
       "summary_other": "{{count}} bloqueos activos · {{value}} asegurados",
       "copyUrl": "Copiar enlace para compartir",
-      "copyBadge": "Copiar insignia para README"
+      "copyBadge": "Copiar insignia de README"
     }
   },
   "discover": {
@@ -506,18 +515,18 @@
     },
     "notInitialized": {
       "title": "Contrato no inicializado",
-      "message": "El contrato aún no se ha inicializado con un administrador.",
-      "recovery": "Contacta al operador del contrato para inicializar el despliegue."
+      "message": "Este contrato aún no ha sido inicializado con un administrador.",
+      "recovery": "Ponte en contacto con el operador del contrato para inicializar el despliegue."
     },
     "lockNotFound": {
       "title": "Bloqueo no encontrado",
-      "message": "No se encontró ningún bloqueo con este ID.",
+      "message": "No se encontró ningún registro de bloqueo que coincida con este ID.",
       "recovery": "Verifica el ID del bloqueo y la dirección del contrato e inténtalo de nuevo."
     },
     "contractPaused": {
-      "title": "Contrato en pausa",
-      "message": "El administrador ha pausado el contrato por mantenimiento o emergencia.",
-      "recovery": "Vuelve a intentarlo más tarde, cuando se reanuden las operaciones."
+      "title": "Contrato pausado",
+      "message": "El contrato está actualmente pausado por el administrador por mantenimiento o emergencia.",
+      "recovery": "Por favor, vuelve a intentarlo más tarde una vez que se hayan reanudado las operaciones."
     }
   },
   "notfound": {
@@ -555,9 +564,9 @@
   "lockCreated": {
     "title": "Bloqueo creado | StellarLock",
     "description": "Tu bloqueo se ha creado correctamente en Stellar.",
-    "heading": "¡Bloqueo creado!",
-    "subheading": "Tus tokens ahora están bloqueados on-chain.",
-    "vestingActive": "Hay un calendario de vesting activo.",
+    "heading": "¡Bloqueo creado con éxito!",
+    "subheading": "Tus tokens ahora están bloqueados en la cadena.",
+    "vestingActive": "El calendario de vesting está activo.",
     "lockSummary": "Resumen del bloqueo",
     "lockId": "ID del bloqueo",
     "copyLockId": "Copiar ID del bloqueo",
@@ -579,13 +588,13 @@
     "network": "Red",
     "shareTitle": "Compartir este bloqueo",
     "copyShareLink": "Copiar enlace para compartir",
-    "viewLockDetail": "Ver detalle del bloqueo",
-    "createAnother": "Crear otro",
+    "viewLockDetail": "Ver detalles del bloqueo",
+    "createAnother": "Crear otro bloqueo",
     "copied": "¡{{label}} copiado!"
   },
   "txProgress": {
     "simulating": "Simulando transacción…",
-    "signing": "Firma en tu billetera…",
+    "signing": "Por favor, firma en tu billetera…",
     "submitting": "Enviando a la red…",
     "confirming": "Esperando confirmación…"
   },
@@ -596,6 +605,7 @@
   "rpcStatus": {
     "unreachable": "La red Stellar no está disponible. Algunas funciones pueden no estar disponibles…",
     "slow": "Conexión de red lenta. Las respuestas pueden tardar más de lo habitual."
+  },
   "qrCode": {
     "shareLockAria": "Compartir bloqueo mediante código QR",
     "closeAria": "Cerrar el modal del código QR",
@@ -614,6 +624,7 @@
   "verifiedBadge": {
     "verifiedTitle": "Token verificado — incluido en la lista de permitidos de la comunidad StellarLock",
     "unverifiedTitle": "Token no verificado — no está en la lista de permitidos de la comunidad. Procede con precaución."
+  },
   "addressBook": {
     "title": "Libreta de direcciones",
     "close": "Cerrar libreta de direcciones",
@@ -645,6 +656,7 @@
     "linearVestingEnabled": "Vesting lineal activado",
     "insufficientBalance": "Saldo insuficiente.",
     "approvalRequired": "Aprobación requerida"
+  },
   "settings": {
     "title": "Configuración",
     "addressBook": "Libreta de direcciones",
@@ -657,5 +669,12 @@
     "exportJson": "Exportar como JSON",
     "importJson": "Importar desde JSON",
     "searchPlaceholder": "Buscar por etiqueta o dirección…"
+  },
+  "breadcrumb": {
+    "ariaLabel": "Miga de pan"
+  },
+  "lockTable": {
+    "select": "Seleccionar",
+    "actions": "Acciones"
   }
 }
