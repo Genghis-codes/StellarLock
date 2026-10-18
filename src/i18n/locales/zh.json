@@ -101,10 +101,11 @@
     "metadataTitle": "项目信息（可选）",
     "metadataDesc": "显示在锁定的详细页面和浏览器上，以便社区验证谁锁定了此项目。",
     "description": "描述",
-    "descriptionPlaceholder": "这个锁定是为了什么？",
+    "descriptionPlaceholder": "为何创建此锁定？（例如：团队代币锁定 2 年）",
     "projectUrl": "项目网址",
     "logoUrl": "Logo 网址",
-    "approving": "授权中…"
+    "approving": "授权中…",
+    "openAddressBook": "打开地址簿"
   },
   "lpForm": {
     "dex": "DEX",
@@ -129,7 +130,13 @@
     "insufficientBalance": "余额不足。你有 {{balance}}，但需要 {{amount}}。",
     "needsApproval": "在锁定之前，你需要授权合约转移你的 LP 代币。",
     "approveAndContinue": "授权并继续",
-    "approving": "授权中…"
+    "approving": "授权中…",
+    "openAddressBook": "打开地址簿",
+    "beneficiaryHint": "留空则使用已连接的钱包作为受益人。",
+    "description": "描述",
+    "descriptionPlaceholder": "为何创建此锁定？（例如：流动性锁定 2 年）",
+    "projectUrl": "项目网址",
+    "logoUrl": "Logo 网址"
   },
   "myLocks": {
     "title": "我的锁定",
@@ -665,5 +672,12 @@
     "exportJson": "导出为 JSON",
     "importJson": "从 JSON 导入",
     "searchPlaceholder": "按标签或地址搜索…"
+  },
+  "breadcrumb": {
+    "ariaLabel": "面包屑导航"
+  },
+  "lockTable": {
+    "select": "选择",
+    "actions": "操作"
   }
 }

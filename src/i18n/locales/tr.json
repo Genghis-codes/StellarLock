@@ -89,7 +89,7 @@
     "metadataTitle": "Proje bilgisi (isteğe bağlı)",
     "metadataDesc": "Topluluğunuzun bu kilidi kimin oluşturduğunu doğrulayabilmesi için kilidin detay ve gezgin sayfalarında gösterilir.",
     "description": "Açıklama",
-    "descriptionPlaceholder": "Bu kilit ne için?",
+    "descriptionPlaceholder": "Bu kilit neden oluşturuluyor? (ör. 2 yıl boyunca kilitli ekip tokenları)",
     "projectUrl": "Proje URL'si",
     "logoUrl": "Logo URL'si",
     "insufficientBalance": "Yetersiz bakiye. {{balance}} var ama {{amount}} gerekli.",
@@ -104,7 +104,8 @@
     "vestingTemplateLinear1y": "1 yıllık doğrusal",
     "vestingTemplateLinear2y": "2 yıllık doğrusal",
     "vestingTemplateLinear6m": "6 aylık doğrusal",
-    "vestingTemplateQuarterly": "Çeyrek dönem (%25 her çeyrek)"
+    "vestingTemplateQuarterly": "Çeyrek dönem (%25 her çeyrek)",
+    "openAddressBook": "Adres defterini aç"
   },
   "lpForm": {
     "dex": "DEX",
@@ -129,7 +130,13 @@
     "insufficientBalance": "Yetersiz bakiye. {{balance}} var ama {{amount}} gerekli.",
     "needsApproval": "Kilitlemeden önce sözleşmenin LP tokenlerinizi transfer etmesine izin vermeniz gerekiyor.",
     "approveAndContinue": "Onayla ve Devam Et",
-    "approving": "Onaylanıyor…"
+    "approving": "Onaylanıyor…",
+    "openAddressBook": "Adres defterini aç",
+    "beneficiaryHint": "Bağlı cüzdanınızı yararlanıcı olarak kullanmak için boş bırakın.",
+    "description": "Açıklama",
+    "descriptionPlaceholder": "Bu kilit neden oluşturuluyor? (ör. 2 yıl boyunca kilitli likidite)",
+    "projectUrl": "Proje URL'si",
+    "logoUrl": "Logo URL'si"
   },
   "myLocks": {
     "title": "Kilitlerim",
@@ -662,5 +669,12 @@
     "exportJson": "JSON olarak dışa aktar",
     "importJson": "JSON'dan içe aktar",
     "searchPlaceholder": "Etiket veya adrese göre ara…"
+  },
+  "breadcrumb": {
+    "ariaLabel": "Gezinme yolu"
+  },
+  "lockTable": {
+    "select": "Seç",
+    "actions": "İşlemler"
   }
 }
