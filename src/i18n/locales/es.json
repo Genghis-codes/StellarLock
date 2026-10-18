@@ -596,6 +596,7 @@
   "rpcStatus": {
     "unreachable": "La red Stellar no está disponible. Algunas funciones pueden no estar disponibles…",
     "slow": "Conexión de red lenta. Las respuestas pueden tardar más de lo habitual."
+  },
   "qrCode": {
     "shareLockAria": "Compartir bloqueo mediante código QR",
     "closeAria": "Cerrar el modal del código QR",
@@ -614,6 +615,7 @@
   "verifiedBadge": {
     "verifiedTitle": "Token verificado — incluido en la lista de permitidos de la comunidad StellarLock",
     "unverifiedTitle": "Token no verificado — no está en la lista de permitidos de la comunidad. Procede con precaución."
+  },
   "addressBook": {
     "title": "Libreta de direcciones",
     "close": "Cerrar libreta de direcciones",
@@ -645,6 +647,7 @@
     "linearVestingEnabled": "Vesting lineal activado",
     "insufficientBalance": "Saldo insuficiente.",
     "approvalRequired": "Aprobación requerida"
+  },
   "settings": {
     "title": "Configuración",
     "addressBook": "Libreta de direcciones",
