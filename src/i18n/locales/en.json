@@ -191,6 +191,7 @@
     "confirmTransfer": "Confirm transfer",
     "securityNotice": "These tokens are secured by the StellarLock contract until the unlock date. Neither the creator nor StellarLock can move them early.",
     "viewExplorer": "View token explorer",
+    "unverifiedWarning": "Unverified token — not on the community allowlist. Proceed with caution.",
     "withdrawSuccess": "Withdrawal confirmed.",
     "extendSuccess": "Lock extended.",
     "transferSuccess": "Beneficiary transferred.",
@@ -602,6 +603,7 @@
     "slow": "Slow network connection. Responses may take longer than usual.",
     "unreachableIndicator": "Network unreachable",
     "slowIndicator": "Slow network"
+  },
   "qrCode": {
     "shareAria": "Share lock via QR code",
     "closeAria": "Close QR code modal",
@@ -649,6 +651,7 @@
     "unverifiedTooltip": "Unverified token — not on the community allowlist. Proceed with caution.",
     "verified": "Verified",
     "unverified": "Unverified"
+  },
   "addressBook": {
     "title": "Address Book",
     "close": "Close address book",

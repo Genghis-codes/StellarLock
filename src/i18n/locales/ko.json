@@ -596,6 +596,7 @@
   "rpcStatus": {
     "unreachable": "Stellar 네트워크에 연결할 수 없습니다. 일부 기능을 사용하지 못할 수 있습니다…",
     "slow": "네트워크 연결이 느립니다. 응답이 평소보다 오래 걸릴 수 있습니다."
+  },
   "qrCode": {
     "shareLockAria": "QR 코드로 잠금 공유",
     "closeAria": "QR 코드 모달 닫기",
@@ -614,6 +615,7 @@
   "verifiedBadge": {
     "verifiedTitle": "검증된 토큰 — StellarLock 커뮤니티 허용 목록에 등록됨",
     "unverifiedTitle": "검증되지 않은 토큰 — 커뮤니티 허용 목록에 없습니다. 주의하세요."
+  },
   "addressBook": {
     "title": "주소록",
     "close": "주소록 닫기",
@@ -645,6 +647,7 @@
     "linearVestingEnabled": "선형 베스팅 활성화됨",
     "insufficientBalance": "잔액이 부족합니다.",
     "approvalRequired": "승인 필요"
+  },
   "settings": {
     "title": "설정",
     "addressBook": "주소록",

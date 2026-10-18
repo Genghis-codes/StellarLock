@@ -656,6 +656,29 @@ fn create_lock_returns_typed_error_on_tvl_overflow() {
     );
 }
 
+// ── Re-entrancy guard (guard_enter) ──────────────────────────────────────────
+
+/// `cargo mutants` found that replacing `guard_enter`'s body with `Ok(())`
+/// survives, because no test ever holds the guard before calling a guarded
+/// entry point. Set `DataKey::ReentrancyGuard` directly in temporary storage
+/// (as if a re-entrant call were already in flight) and assert the guarded
+/// entry point rejects the call with `ContractError::ReentrancyDetected`
+/// instead of proceeding.
+#[test]
+fn withdraw_rejected_while_reentrancy_guard_is_held() {
+    let (env, contract_id, _token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+
+    env.as_contract(&contract_id, || {
+        env.storage()
+            .temporary()
+            .set(&crate::DataKey::ReentrancyGuard, &true);
+    });
+
+    let result = client.try_withdraw(&1);
+    assert_eq!(result, Err(Ok(ContractError::ReentrancyDetected)));
+}
+
 /// Complement: a TVL addition that lands exactly on i128::MAX must succeed and
 /// persist the new TVL.
 #[test]
@@ -872,6 +895,86 @@ fn create_split_lock_succeeds_and_allocates_correctly() {
     let lock1 = client.get_lock(&lock1_id).unwrap();
     assert_eq!(lock1.amount, 3_000_i128);
     assert_eq!(lock1.beneficiary, b2);
+}
+
+#[test]
+fn create_split_lock_succeeds_at_min_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+    let unlock_at = env.ledger().timestamp() + crate::MIN_LOCK_DURATION;
+    let group_id = client.create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &vec![&env, (b1, 7_000_u64), (b2, 3_000_u64)],
+        &unlock_at,
+        &None,
+    );
+    assert!(client.get_split_group(&group_id).is_some());
+}
+
+#[test]
+fn create_split_lock_fails_one_second_below_min_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+    let unlock_at = env.ledger().timestamp() + crate::MIN_LOCK_DURATION - 1;
+    let result = client.try_create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &vec![&env, (b1, 7_000_u64), (b2, 3_000_u64)],
+        &unlock_at,
+        &None,
+    );
+    assert_eq!(result, Err(Ok(ContractError::LockDurationTooShort)));
+}
+
+#[test]
+fn create_split_lock_succeeds_at_max_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+    let unlock_at = env.ledger().timestamp() + crate::MAX_LOCK_DURATION;
+    let group_id = client.create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &vec![&env, (b1, 7_000_u64), (b2, 3_000_u64)],
+        &unlock_at,
+        &None,
+    );
+    assert!(client.get_split_group(&group_id).is_some());
+}
+
+#[test]
+fn create_split_lock_fails_one_second_above_max_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+    let unlock_at = env.ledger().timestamp() + crate::MAX_LOCK_DURATION + 1;
+    let result = client.try_create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &vec![&env, (b1, 7_000_u64), (b2, 3_000_u64)],
+        &unlock_at,
+        &None,
+    );
+    assert_eq!(result, Err(Ok(ContractError::LockDurationTooLong)));
 }
 
 /// Regression test for #630: an indexer building state purely from events
@@ -1710,6 +1813,251 @@ fn get_locks_by_token_and_by_creator_return_correct_ids_with_pagination() {
     let lock_1 = client.create_lock(
         &creator_a,
         &token_a,
+// ── Issue #900: create_split_lock beneficiary-count boundary and remainder ────
+
+#[test]
+fn create_split_lock_rejects_one_more_than_max_beneficiaries() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    mint(&env, &token_id, &creator, 11_000);
+
+    // 11 beneficiaries — one more than the maximum of 10.
+    let mut beneficiaries = vec![&env];
+    for _ in 0..11 {
+        beneficiaries.push_back((Address::generate(&env), 909_u64));
+    }
+
+    let result = client.try_create_split_lock(
+        &creator,
+        &token_id,
+        &11_000_i128,
+        &beneficiaries,
+        &(env.ledger().timestamp() + 100_000),
+        &None,
+    );
+    assert_eq!(result, Err(Ok(ContractError::TooManyBeneficiaries)));
+}
+
+#[test]
+fn create_split_lock_accepts_exactly_max_beneficiaries() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+
+    // Exactly 10 beneficiaries — the maximum allowed.
+    let mut beneficiaries = vec![&env];
+    for _ in 0..10 {
+        beneficiaries.push_back((Address::generate(&env), 1_000_u64)); // 10% each
+    }
+
+    let group_id = client.create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &beneficiaries,
+        &(env.ledger().timestamp() + 100_000),
+        &None,
+    );
+
+    let group = client.get_split_group(&group_id);
+    assert!(group.is_some(), "lock with exactly 10 beneficiaries should succeed");
+    assert_eq!(group.unwrap().lock_ids.len(), 10);
+}
+
+#[test]
+fn create_split_lock_remainder_allocation_sums_exactly_to_total() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    let b3 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+
+    // 1_000 split 3 ways by bps that don't divide evenly:
+    // 3334 + 3333 + 3333 = 10_000 bps.
+    // floor(1000*3334/10000) = 333, floor(1000*3333/10000) = 333,
+    // leaving the last beneficiary the remainder (334).
+    let group_id = client.create_split_lock(
+        &creator,
+        &token_id,
+        &1_000_i128,
+        &vec![
+            &env,
+            (b1.clone(), 3_334_u64),
+            (b2.clone(), 3_333_u64),
+            (b3.clone(), 3_333_u64),
+        ],
+        &(env.ledger().timestamp() + 100_000),
+        &None,
+    );
+
+    let group = client.get_split_group(&group_id).unwrap();
+    assert_eq!(group.lock_ids.len(), 3);
+
+    let mut total: i128 = 0;
+    for i in 0..group.lock_ids.len() {
+        let lock_id = group.lock_ids.get(i).unwrap();
+        let lock = client.get_lock(&lock_id).unwrap();
+        total += lock.amount;
+    }
+    assert_eq!(total, 1_000_i128, "individual lock amounts must sum exactly to total_amount");
+
+    // The last beneficiary (b3) receives whatever remainder is left over
+    // after the earlier beneficiaries' floor-divided shares.
+    let last_lock_id = group.lock_ids.get(2).unwrap();
+    let last_lock = client.get_lock(&last_lock_id).unwrap();
+    assert_eq!(last_lock.beneficiary, b3);
+    assert_eq!(last_lock.amount, 334_i128);
+}
+
+// ── Issue #898: get_lock_count_by_token ────────────────────────────────────────
+
+#[test]
+fn get_lock_count_by_token_reflects_zero_one_and_many_locks() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+
+    assert_eq!(client.get_lock_count_by_token(&token_id), 0);
+
+    let creator1 = Address::generate(&env);
+    mint(&env, &token_id, &creator1, 1_000);
+    client.create_lock(
+        &creator1,
+        &token_id,
+        &100_i128,
+        &Address::generate(&env),
+        &(env.ledger().timestamp() + 100_000),
+        &None,
+        &empty_metadata(&env),
+    );
+    assert_eq!(client.get_lock_count_by_token(&token_id), 1);
+
+    // Use distinct creators so the per-creator rate limit doesn't interfere.
+    let creator2 = Address::generate(&env);
+    mint(&env, &token_id, &creator2, 1_000);
+    client.create_lock(
+        &creator2,
+        &token_id,
+        &100_i128,
+        &Address::generate(&env),
+        &(env.ledger().timestamp() + 100_000),
+        &None,
+        &empty_metadata(&env),
+    );
+
+    let creator3 = Address::generate(&env);
+    mint(&env, &token_id, &creator3, 1_000);
+    client.create_lock(
+        &creator3,
+        &token_id,
+        &100_i128,
+        &Address::generate(&env),
+        &(env.ledger().timestamp() + 100_000),
+        &None,
+        &empty_metadata(&env),
+    );
+
+    assert_eq!(client.get_lock_count_by_token(&token_id), 3);
+// ── Issue #897: bump_lock_ttl extends the lock entry TTL ─────────────────────
+
+#[test]
+fn bump_lock_ttl_extends_persistent_entry_ttl() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+    let lock_id = client.create_lock(
+        &creator,
+        &token_id,
+        &500_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    // Let a chunk of ledgers pass so the entry's remaining TTL drops below
+    // the "fresh" value it got on creation.
+    env.ledger().with_mut(|l| l.sequence_number += 10_000);
+
+    let ttl_before = env.as_contract(&contract_id, || {
+        env.storage()
+            .persistent()
+            .get_ttl(&crate::DataKey::Lock(lock_id))
+    });
+
+    client.bump_lock_ttl(&lock_id);
+
+    let ttl_after = env.as_contract(&contract_id, || {
+        env.storage()
+            .persistent()
+            .get_ttl(&crate::DataKey::Lock(lock_id))
+    });
+
+    assert!(
+        ttl_after > ttl_before,
+        "bump_lock_ttl should extend the lock's persistent TTL (before={ttl_before}, after={ttl_after})"
+    );
+}
+
+// ── Issue #895: TotalLocked decreases correctly after withdraw ──────────────
+
+#[test]
+fn total_locked_decreases_by_exact_withdrawn_amount() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+    let lock_id = client.create_lock(
+        &creator,
+        &token_id,
+        &700_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    let before = client.get_total_locked(&token_id);
+    assert_eq!(before, 700_i128);
+
+    advance_time(&env, 100_000);
+    client.withdraw(&lock_id);
+
+    let after = client.get_total_locked(&token_id);
+    assert_eq!(
+        before - after,
+        700_i128,
+        "get_total_locked must drop by exactly the withdrawn amount"
+    );
+    assert_eq!(after, 0_i128, "withdrawing the only lock must zero out TotalLocked");
+}
+
+// ── Issue #894: create_lock duration boundaries (exactly MIN and MAX) ───────
+
+#[test]
+fn create_lock_accepts_exactly_min_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + crate::MIN_LOCK_DURATION;
+    let lock_id = client.create_lock(
+        &creator,
+        &token_id,
         &100_i128,
         &beneficiary,
         &unlock_at,
@@ -1722,6 +2070,22 @@ fn get_locks_by_token_and_by_creator_return_correct_ids_with_pagination() {
         &creator_a,
         &token_b,
         &200_i128,
+    assert!(client.get_lock(&lock_id).is_some());
+}
+
+#[test]
+fn create_lock_rejects_just_under_min_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + crate::MIN_LOCK_DURATION - 1;
+    let result = client.try_create_lock(
+        &creator,
+        &token_id,
+        &100_i128,
         &beneficiary,
         &unlock_at,
         &None,
@@ -1733,6 +2097,22 @@ fn get_locks_by_token_and_by_creator_return_correct_ids_with_pagination() {
         &creator_b,
         &token_a,
         &300_i128,
+    assert_eq!(result, Err(Ok(ContractError::LockDurationTooShort)));
+}
+
+#[test]
+fn create_lock_accepts_exactly_max_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + crate::MAX_LOCK_DURATION;
+    let lock_id = client.create_lock(
+        &creator,
+        &token_id,
+        &100_i128,
         &beneficiary,
         &unlock_at,
         &None,
@@ -1744,6 +2124,22 @@ fn get_locks_by_token_and_by_creator_return_correct_ids_with_pagination() {
         &creator_b,
         &token_b,
         &400_i128,
+    assert!(client.get_lock(&lock_id).is_some());
+}
+
+#[test]
+fn create_lock_rejects_just_over_max_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + crate::MAX_LOCK_DURATION + 1;
+    let result = client.try_create_lock(
+        &creator,
+        &token_id,
+        &100_i128,
         &beneficiary,
         &unlock_at,
         &None,
@@ -1784,4 +2180,5 @@ fn get_locks_by_token_and_by_creator_return_correct_ids_with_pagination() {
     // offset beyond the end returns empty, not an error.
     let empty_page = client.get_locks_by_creator(&creator_a, &5, &10);
     assert_eq!(empty_page.len(), 0);
+    assert_eq!(result, Err(Ok(ContractError::LockDurationTooLong)));
 }
