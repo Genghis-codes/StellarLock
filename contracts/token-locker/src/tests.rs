@@ -1682,3 +1682,106 @@ fn create_split_lock_rejects_duplicate_beneficiaries() {
     );
     assert_eq!(result, Err(Ok(ContractError::DuplicateBeneficiary)));
 }
+
+// ── get_locks_by_token / get_locks_by_creator coverage (#903) ────────────────
+
+#[test]
+fn get_locks_by_token_and_by_creator_return_correct_ids_with_pagination() {
+    let (env, contract_id, token_a) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+
+    let admin_b = Address::generate(&env);
+    let token_b = env
+        .register_stellar_asset_contract_v2(admin_b.clone())
+        .address();
+
+    let creator_a = Address::generate(&env);
+    let creator_b = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+
+    mint(&env, &token_a, &creator_a, 1_000);
+    mint(&env, &token_b, &creator_a, 1_000);
+    mint(&env, &token_a, &creator_b, 1_000);
+    mint(&env, &token_b, &creator_b, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+
+    // lock_1: creator_a / token_a
+    let lock_1 = client.create_lock(
+        &creator_a,
+        &token_a,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+    advance_time(&env, 61);
+    // lock_2: creator_a / token_b
+    let lock_2 = client.create_lock(
+        &creator_a,
+        &token_b,
+        &200_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+    advance_time(&env, 61);
+    // lock_3: creator_b / token_a
+    let lock_3 = client.create_lock(
+        &creator_b,
+        &token_a,
+        &300_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+    advance_time(&env, 61);
+    // lock_4: creator_b / token_b
+    let lock_4 = client.create_lock(
+        &creator_b,
+        &token_b,
+        &400_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    // ── by_creator ────────────────────────────────────────────────────────
+    let creator_a_locks = client.get_locks_by_creator(&creator_a, &0, &10);
+    assert_eq!(creator_a_locks.len(), 2);
+    assert_eq!(creator_a_locks.get(0).unwrap().id, lock_1);
+    assert_eq!(creator_a_locks.get(1).unwrap().id, lock_2);
+
+    let creator_b_locks = client.get_locks_by_creator(&creator_b, &0, &10);
+    assert_eq!(creator_b_locks.len(), 2);
+    assert_eq!(creator_b_locks.get(0).unwrap().id, lock_3);
+    assert_eq!(creator_b_locks.get(1).unwrap().id, lock_4);
+
+    // ── by_token ──────────────────────────────────────────────────────────
+    let token_a_locks = client.get_locks_by_token(&token_a, &0, &10);
+    assert_eq!(token_a_locks.len(), 2);
+    assert_eq!(token_a_locks.get(0).unwrap().id, lock_1);
+    assert_eq!(token_a_locks.get(1).unwrap().id, lock_3);
+
+    let token_b_locks = client.get_locks_by_token(&token_b, &0, &10);
+    assert_eq!(token_b_locks.len(), 2);
+    assert_eq!(token_b_locks.get(0).unwrap().id, lock_2);
+    assert_eq!(token_b_locks.get(1).unwrap().id, lock_4);
+
+    // ── pagination: offset/limit ─────────────────────────────────────────
+    let creator_a_page = client.get_locks_by_creator(&creator_a, &1, &1);
+    assert_eq!(creator_a_page.len(), 1);
+    assert_eq!(creator_a_page.get(0).unwrap().id, lock_2);
+
+    let token_a_page = client.get_locks_by_token(&token_a, &1, &1);
+    assert_eq!(token_a_page.len(), 1);
+    assert_eq!(token_a_page.get(0).unwrap().id, lock_3);
+
+    // offset beyond the end returns empty, not an error.
+    let empty_page = client.get_locks_by_creator(&creator_a, &5, &10);
+    assert_eq!(empty_page.len(), 0);
+}

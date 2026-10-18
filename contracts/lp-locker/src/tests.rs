@@ -2539,3 +2539,130 @@ fn create_split_lock_accepts_exactly_max_beneficiaries() {
     assert!(group.is_some(), "lock with exactly 10 beneficiaries should succeed");
     assert_eq!(group.unwrap().lock_ids.len(), 10);
 }
+
+// ── extend MAX_EXTENSIONS boundary (#910) ────────────────────────────────────
+
+#[test]
+fn extend_respects_max_extensions_boundary() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let mut unlock_at = env.ledger().timestamp() + 100_000;
+    let lock_id = client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    // MAX_EXTENSIONS is 52 — exhaust every allowed extension.
+    for _ in 0..52 {
+        unlock_at += 1_000;
+        client.extend(&lock_id, &unlock_at);
+    }
+
+    let lock = client.get_lock(&lock_id).unwrap();
+    assert_eq!(lock.extended_count, 52);
+    assert_eq!(lock.unlock_at, unlock_at);
+
+    // The 53rd extension must be rejected even though it would otherwise be valid.
+    unlock_at += 1_000;
+    let result = client.try_extend(&lock_id, &unlock_at);
+    assert_eq!(result, Err(Ok(ContractError::ExtensionLimitExceeded)));
+
+    // The lock must be untouched by the rejected attempt.
+    let lock = client.get_lock(&lock_id).unwrap();
+    assert_eq!(lock.extended_count, 52);
+}
+
+// ── TotalLocked decrease on withdraw (#909) ───────────────────────────────────
+
+#[test]
+fn withdraw_decreases_total_locked_by_exact_amount() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+    let lock_id = client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &700_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    let before = client.get_total_locked(&pool_share_id);
+    assert_eq!(before, 700_i128);
+
+    advance_time(&env, 200_000);
+    client.withdraw(&lock_id);
+
+    let after = client.get_total_locked(&pool_share_id);
+    assert_eq!(
+        before - after,
+        700_i128,
+        "TotalLocked must decrease by exactly the withdrawn amount"
+    );
+    assert_eq!(after, 0_i128);
+}
+
+// ── Re-entrancy guard (#904) ──────────────────────────────────────────────────
+
+#[test]
+fn withdraw_rejects_reentrant_call_via_guard() {
+    let (env, contract_id, pool_share_id, token_a, token_b) = setup_env();
+    let client = LpLockerClient::new(&env, &contract_id);
+
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &pool_share_id, &creator, 1_000);
+
+    let unlock_at = env.ledger().timestamp() + 100_000;
+    let lock_id = client.create_lock(
+        &creator,
+        &pool_share_id,
+        &Dex::Soroswap,
+        &token_a,
+        &token_b,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    advance_time(&env, 200_000);
+
+    // Simulate re-entrancy by holding the guard before invoking a guarded entry point.
+    env.as_contract(&contract_id, || {
+        env.storage()
+            .temporary()
+            .set(&crate::DataKey::ReentrancyGuard, &true);
+    });
+
+    let result = client.try_withdraw(&lock_id);
+    assert_eq!(result, Err(Ok(ContractError::ReentrancyDetected)));
+
+    // The lock must remain untouched: the guard rejected the call before any state change.
+    let lock = client.get_lock(&lock_id).unwrap();
+    assert!(!lock.withdrawn);
+}
