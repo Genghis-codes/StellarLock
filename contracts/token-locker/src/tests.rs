@@ -3,7 +3,7 @@ use soroban_sdk::{
     token, vec, Address, BytesN, Env, IntoVal, Symbol, TryFromVal,
 };
 
-use crate::{ContractError, LockMetadata, TokenLocker, TokenLockerClient, Vesting};
+use crate::{ContractError, LockMetadata, TokenLocker, TokenLockerClient, Vesting, MAX_EXTENSIONS};
 
 // ── Test setup ────────────────────────────────────────────────────────────────
 
@@ -271,6 +271,50 @@ fn extend_cannot_decrease_unlock_time() {
         Err(Ok(ContractError::CanOnlyExtend))
     );
     assert!(client.try_extend(&lock_id, &(unlock_at + 100)).is_ok());
+}
+
+// Issue #896: `extend`'s `lock.extended_count >= MAX_EXTENSIONS` guard has
+// surviving mutants. This pins down both edges: the MAX_EXTENSIONS-th
+// extension must still succeed, and the next one must be rejected with
+// `ExtensionLimitExceeded`.
+#[test]
+fn extend_allows_up_to_max_extensions_then_rejects_the_next() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+    let unlock_at = env.ledger().timestamp() + 100_000;
+    let lock_id = client.create_lock(
+        &creator,
+        &token_id,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &None,
+        &empty_metadata(&env),
+    );
+
+    let mut current_unlock_at = unlock_at;
+    for i in 1..=MAX_EXTENSIONS {
+        current_unlock_at += 1_000;
+        client.extend(&lock_id, &current_unlock_at);
+        let lock = client.get_lock(&lock_id).unwrap();
+        assert_eq!(lock.extended_count, i);
+        assert_eq!(lock.unlock_at, current_unlock_at);
+    }
+
+    // The lock has now been extended exactly MAX_EXTENSIONS times. One more
+    // (even though it would otherwise be a perfectly valid extension) must
+    // be rejected.
+    current_unlock_at += 1_000;
+    assert_eq!(
+        client.try_extend(&lock_id, &current_unlock_at),
+        Err(Ok(ContractError::ExtensionLimitExceeded))
+    );
+    // extended_count must not have been bumped by the rejected attempt.
+    let lock = client.get_lock(&lock_id).unwrap();
+    assert_eq!(lock.extended_count, MAX_EXTENSIONS);
 }
 
 #[test]
@@ -1644,6 +1688,70 @@ fn create_lock_rejects_vesting_outside_unlock_window() {
     let vesting = Vesting {
         start: unlock_at + 1,
         end: unlock_at + 2,
+        released: 0,
+    };
+
+    let result = client.try_create_lock(
+        &creator,
+        &token_id,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &Some(vesting),
+        &empty_metadata(&env),
+    );
+    assert_eq!(result, Err(Ok(ContractError::VestingOutsideLockBounds)));
+}
+
+// Issue #893: `validate_vesting_bounds` has two surviving mutants on the
+// `v.start < created_at || v.start > unlock_at` check — these two tests pin
+// down the exact boundary on each side of that OR so a `<`→`>` or `>`→`>=`
+// mutation gets caught.
+
+#[test]
+fn create_lock_allows_vesting_start_exactly_at_unlock_at() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+    let now = env.ledger().timestamp();
+    let unlock_at = now + 100_000;
+    // Vesting start exactly at unlock_at is the allowed edge of the
+    // `v.start > unlock_at` check — one second later (tested above) is
+    // rejected.
+    let vesting = Vesting {
+        start: unlock_at,
+        end: unlock_at + 1,
+        released: 0,
+    };
+
+    let result = client.try_create_lock(
+        &creator,
+        &token_id,
+        &100_i128,
+        &beneficiary,
+        &unlock_at,
+        &Some(vesting),
+        &empty_metadata(&env),
+    );
+    assert!(result.is_ok());
+}
+
+#[test]
+fn create_lock_rejects_vesting_start_before_creation_time() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let beneficiary = Address::generate(&env);
+    mint(&env, &token_id, &creator, 1_000);
+    let now = env.ledger().timestamp();
+    let unlock_at = now + 100_000;
+    // Vesting start one second before the lock's creation time — rejected
+    // by the `v.start < created_at` half of the check.
+    let vesting = Vesting {
+        start: now - 1,
+        end: now + 1,
         released: 0,
     };
 
