@@ -599,6 +599,7 @@
   "rpcStatus": {
     "unreachable": "Stellar 网络无法访问。部分功能可能不可用…",
     "slow": "网络连接缓慢。响应时间可能比平时更长。"
+  },
   "qrCode": {
     "shareLockAria": "通过二维码分享锁定",
     "closeAria": "关闭二维码弹窗",
@@ -617,6 +618,7 @@
   "verifiedBadge": {
     "verifiedTitle": "已验证代币 — 已列入 StellarLock 社区白名单",
     "unverifiedTitle": "未验证代币 — 不在社区白名单中。请谨慎操作。"
+  },
   "addressBook": {
     "title": "地址簿",
     "close": "关闭地址簿",
@@ -648,6 +650,7 @@
     "linearVestingEnabled": "已启用线性归属",
     "insufficientBalance": "余额不足。",
     "approvalRequired": "需要授权"
+  },
   "settings": {
     "title": "设置",
     "addressBook": "地址簿",

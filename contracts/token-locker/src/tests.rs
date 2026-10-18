@@ -656,6 +656,29 @@ fn create_lock_returns_typed_error_on_tvl_overflow() {
     );
 }
 
+// ── Re-entrancy guard (guard_enter) ──────────────────────────────────────────
+
+/// `cargo mutants` found that replacing `guard_enter`'s body with `Ok(())`
+/// survives, because no test ever holds the guard before calling a guarded
+/// entry point. Set `DataKey::ReentrancyGuard` directly in temporary storage
+/// (as if a re-entrant call were already in flight) and assert the guarded
+/// entry point rejects the call with `ContractError::ReentrancyDetected`
+/// instead of proceeding.
+#[test]
+fn withdraw_rejected_while_reentrancy_guard_is_held() {
+    let (env, contract_id, _token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+
+    env.as_contract(&contract_id, || {
+        env.storage()
+            .temporary()
+            .set(&crate::DataKey::ReentrancyGuard, &true);
+    });
+
+    let result = client.try_withdraw(&1);
+    assert_eq!(result, Err(Ok(ContractError::ReentrancyDetected)));
+}
+
 /// Complement: a TVL addition that lands exactly on i128::MAX must succeed and
 /// persist the new TVL.
 #[test]
@@ -872,6 +895,86 @@ fn create_split_lock_succeeds_and_allocates_correctly() {
     let lock1 = client.get_lock(&lock1_id).unwrap();
     assert_eq!(lock1.amount, 3_000_i128);
     assert_eq!(lock1.beneficiary, b2);
+}
+
+#[test]
+fn create_split_lock_succeeds_at_min_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+    let unlock_at = env.ledger().timestamp() + crate::MIN_LOCK_DURATION;
+    let group_id = client.create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &vec![&env, (b1, 7_000_u64), (b2, 3_000_u64)],
+        &unlock_at,
+        &None,
+    );
+    assert!(client.get_split_group(&group_id).is_some());
+}
+
+#[test]
+fn create_split_lock_fails_one_second_below_min_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+    let unlock_at = env.ledger().timestamp() + crate::MIN_LOCK_DURATION - 1;
+    let result = client.try_create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &vec![&env, (b1, 7_000_u64), (b2, 3_000_u64)],
+        &unlock_at,
+        &None,
+    );
+    assert_eq!(result, Err(Ok(ContractError::LockDurationTooShort)));
+}
+
+#[test]
+fn create_split_lock_succeeds_at_max_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+    let unlock_at = env.ledger().timestamp() + crate::MAX_LOCK_DURATION;
+    let group_id = client.create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &vec![&env, (b1, 7_000_u64), (b2, 3_000_u64)],
+        &unlock_at,
+        &None,
+    );
+    assert!(client.get_split_group(&group_id).is_some());
+}
+
+#[test]
+fn create_split_lock_fails_one_second_above_max_duration() {
+    let (env, contract_id, token_id) = setup_env();
+    let client = TokenLockerClient::new(&env, &contract_id);
+    let creator = Address::generate(&env);
+    let b1 = Address::generate(&env);
+    let b2 = Address::generate(&env);
+    mint(&env, &token_id, &creator, 10_000);
+    let unlock_at = env.ledger().timestamp() + crate::MAX_LOCK_DURATION + 1;
+    let result = client.try_create_split_lock(
+        &creator,
+        &token_id,
+        &10_000_i128,
+        &vec![&env, (b1, 7_000_u64), (b2, 3_000_u64)],
+        &unlock_at,
+        &None,
+    );
+    assert_eq!(result, Err(Ok(ContractError::LockDurationTooLong)));
 }
 
 /// Regression test for #630: an indexer building state purely from events
