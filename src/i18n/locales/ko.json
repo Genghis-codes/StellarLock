@@ -98,11 +98,12 @@
     "approveAndContinue": "승인 및 계속",
     "approving": "승인 중…",
     "description": "설명",
-    "descriptionPlaceholder": "이 잠금은 무엇을 위한 것인가요?",
+    "descriptionPlaceholder": "이 잠금을 생성하는 이유는 무엇인가요? (예: 2년 동안 팀 토큰 잠금)",
     "logoUrl": "로고 URL",
     "metadataDesc": "잠금 상세 및 탐색기 페이지에 표시되어 커뮤니티가 이 잠금을 만든 사람을 확인할 수 있습니다.",
     "metadataTitle": "프로젝트 정보 (선택 사항)",
-    "projectUrl": "프로젝트 URL"
+    "projectUrl": "프로젝트 URL",
+    "openAddressBook": "주소록 열기"
   },
   "lpForm": {
     "dex": "DEX",
@@ -127,7 +128,13 @@
     "insufficientBalance": "잔액이 부족합니다. {{balance}}이 있지만 {{amount}}이 필요합니다.",
     "needsApproval": "잠그기 전에 컨트랙트가 LP 토큰을 이체할 수 있도록 승인해야 합니다.",
     "approveAndContinue": "승인 및 계속",
-    "approving": "승인 중…"
+    "approving": "승인 중…",
+    "openAddressBook": "주소록 열기",
+    "beneficiaryHint": "연결된 지갑을 수혜자로 사용하려면 비워 두세요.",
+    "description": "설명",
+    "descriptionPlaceholder": "이 잠금을 생성하는 이유는 무엇인가요? (예: 2년 동안 유동성 잠금)",
+    "projectUrl": "프로젝트 URL",
+    "logoUrl": "로고 URL"
   },
   "myLocks": {
     "title": "내 잠금",
@@ -596,6 +603,7 @@
   "rpcStatus": {
     "unreachable": "Stellar 네트워크에 연결할 수 없습니다. 일부 기능을 사용하지 못할 수 있습니다…",
     "slow": "네트워크 연결이 느립니다. 응답이 평소보다 오래 걸릴 수 있습니다."
+  },
   "qrCode": {
     "shareLockAria": "QR 코드로 잠금 공유",
     "closeAria": "QR 코드 모달 닫기",
@@ -614,6 +622,7 @@
   "verifiedBadge": {
     "verifiedTitle": "검증된 토큰 — StellarLock 커뮤니티 허용 목록에 등록됨",
     "unverifiedTitle": "검증되지 않은 토큰 — 커뮤니티 허용 목록에 없습니다. 주의하세요."
+  },
   "addressBook": {
     "title": "주소록",
     "close": "주소록 닫기",
@@ -645,6 +654,7 @@
     "linearVestingEnabled": "선형 베스팅 활성화됨",
     "insufficientBalance": "잔액이 부족합니다.",
     "approvalRequired": "승인 필요"
+  },
   "settings": {
     "title": "설정",
     "addressBook": "주소록",
@@ -657,5 +667,12 @@
     "exportJson": "JSON으로 내보내기",
     "importJson": "JSON에서 가져오기",
     "searchPlaceholder": "레이블 또는 주소로 검색…"
+  },
+  "breadcrumb": {
+    "ariaLabel": "탐색 경로"
+  },
+  "lockTable": {
+    "select": "선택",
+    "actions": "작업"
   }
 }

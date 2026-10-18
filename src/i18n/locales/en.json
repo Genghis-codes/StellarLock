@@ -96,13 +96,14 @@
     "metadataTitle": "Project info (optional)",
     "metadataDesc": "Shown on the lock's detail and explorer pages so your community can verify who locked this.",
     "description": "Description",
-    "descriptionPlaceholder": "What is this lock for?",
+    "descriptionPlaceholder": "Why is this lock being created? (e.g. Team tokens locked for 2 years)",
     "projectUrl": "Project URL",
     "logoUrl": "Logo URL",
     "insufficientBalance": "Insufficient balance. You have {{balance}} but need {{amount}}.",
     "needsApproval": "You need to approve the contract to transfer your tokens before locking.",
     "approveAndContinue": "Approve & Continue",
-    "approving": "Approving…"
+    "approving": "Approving…",
+    "openAddressBook": "Open address book"
   },
   "lpForm": {
     "dex": "DEX",
@@ -127,7 +128,13 @@
     "insufficientBalance": "Insufficient balance. You have {{balance}} but need {{amount}}.",
     "needsApproval": "You need to approve the contract to transfer your LP tokens before locking.",
     "approveAndContinue": "Approve & Continue",
-    "approving": "Approving…"
+    "approving": "Approving…",
+    "openAddressBook": "Open address book",
+    "beneficiaryHint": "Leave blank to use your connected wallet as beneficiary.",
+    "description": "Description",
+    "descriptionPlaceholder": "Why is this lock being created? (e.g. Liquidity locked for 2 years)",
+    "projectUrl": "Project URL",
+    "logoUrl": "Logo URL"
   },
   "myLocks": {
     "title": "My Locks",
@@ -602,6 +609,7 @@
     "slow": "Slow network connection. Responses may take longer than usual.",
     "unreachableIndicator": "Network unreachable",
     "slowIndicator": "Slow network"
+  },
   "qrCode": {
     "shareAria": "Share lock via QR code",
     "closeAria": "Close QR code modal",
@@ -649,6 +657,7 @@
     "unverifiedTooltip": "Unverified token — not on the community allowlist. Proceed with caution.",
     "verified": "Verified",
     "unverified": "Unverified"
+  },
   "addressBook": {
     "title": "Address Book",
     "close": "Close address book",
@@ -693,5 +702,12 @@
     "title": "Confirm lock",
     "confirm": "Confirm",
     "cancel": "Cancel"
+  },
+  "breadcrumb": {
+    "ariaLabel": "Breadcrumb"
+  },
+  "lockTable": {
+    "select": "Select",
+    "actions": "Actions"
   }
 }

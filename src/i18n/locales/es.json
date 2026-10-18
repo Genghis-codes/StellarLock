@@ -99,10 +99,11 @@
     "metadataTitle": "Información del proyecto (opcional)",
     "metadataDesc": "Se muestra en la página de detalle y explorador del bloqueo para que tu comunidad pueda verificar quién lo creó.",
     "description": "Descripción",
-    "descriptionPlaceholder": "¿Para qué es este bloqueo?",
+    "descriptionPlaceholder": "¿Por qué se crea este bloqueo? (ej. Tokens de equipo bloqueados por 2 años)",
     "projectUrl": "URL del proyecto",
     "logoUrl": "URL del logo",
-    "approving": "Aprobando…"
+    "approving": "Aprobando…",
+    "openAddressBook": "Abrir libreta de direcciones"
   },
   "lpForm": {
     "dex": "DEX",
@@ -127,7 +128,13 @@
     "insufficientBalance": "Saldo insuficiente. Tienes {{balance}} pero necesitas {{amount}}.",
     "needsApproval": "Necesitas aprobar el contrato para transferir tus tokens LP antes de bloquear.",
     "approveAndContinue": "Aprobar y continuar",
-    "approving": "Aprobando…"
+    "approving": "Aprobando…",
+    "openAddressBook": "Abrir libreta de direcciones",
+    "beneficiaryHint": "Deja en blanco para usar tu billetera conectada como beneficiario.",
+    "description": "Descripción",
+    "descriptionPlaceholder": "¿Por qué se crea este bloqueo? (ej. Liquidez bloqueada por 2 años)",
+    "projectUrl": "URL del proyecto",
+    "logoUrl": "URL del logo"
   },
   "myLocks": {
     "title": "Mis bloqueos",
@@ -596,6 +603,7 @@
   "rpcStatus": {
     "unreachable": "La red Stellar no está disponible. Algunas funciones pueden no estar disponibles…",
     "slow": "Conexión de red lenta. Las respuestas pueden tardar más de lo habitual."
+  },
   "qrCode": {
     "shareLockAria": "Compartir bloqueo mediante código QR",
     "closeAria": "Cerrar el modal del código QR",
@@ -614,6 +622,7 @@
   "verifiedBadge": {
     "verifiedTitle": "Token verificado — incluido en la lista de permitidos de la comunidad StellarLock",
     "unverifiedTitle": "Token no verificado — no está en la lista de permitidos de la comunidad. Procede con precaución."
+  },
   "addressBook": {
     "title": "Libreta de direcciones",
     "close": "Cerrar libreta de direcciones",
@@ -645,6 +654,7 @@
     "linearVestingEnabled": "Vesting lineal activado",
     "insufficientBalance": "Saldo insuficiente.",
     "approvalRequired": "Aprobación requerida"
+  },
   "settings": {
     "title": "Configuración",
     "addressBook": "Libreta de direcciones",
@@ -657,5 +667,12 @@
     "exportJson": "Exportar como JSON",
     "importJson": "Importar desde JSON",
     "searchPlaceholder": "Buscar por etiqueta o dirección…"
+  },
+  "breadcrumb": {
+    "ariaLabel": "Miga de pan"
+  },
+  "lockTable": {
+    "select": "Seleccionar",
+    "actions": "Acciones"
   }
 }
