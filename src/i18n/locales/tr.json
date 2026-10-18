@@ -23,7 +23,9 @@
     "openMenu": "Menüyü aç",
     "closeMenu": "Menüyü kapat",
     "history": "Geçmiş",
-    "analytics": "Analitik"
+    "analytics": "Analitik",
+    "mainNavigation": "Ana gezinme",
+    "mobileNavigation": "Mobil gezinme"
   },
   "landing": {
     "badge": "Stellar üzerine inşa edildi · Soroban akıllı sözleşmeleri",
@@ -222,7 +224,7 @@
     "noLocksDesc": "<1>{{query}}</1> için herhangi bir kilit bulamadık. Token sembolünü veya sözleşme adresini kontrol edin veya bu token için ilk kilidi oluşturun.",
     "createLock": "Kilit oluştur",
     "badge": {
-      "title": "StellarLock'ta kilitli",
+      "title": "StellarLock ile Kilitlendi",
       "summary": "{{count}} aktif kilit · {{value}} güvence altında",
       "summary_other": "{{count}} aktif kilit · {{value}} güvence altında",
       "copyUrl": "Paylaşım bağlantısını kopyala",
@@ -495,18 +497,18 @@
     },
     "notInitialized": {
       "title": "Sözleşme Başlatılmadı",
-      "message": "Sözleşme henüz bir yönetici ile başlatılmadı.",
+      "message": "Bu sözleşme henüz bir yönetici ile başlatılmamış.",
       "recovery": "Dağıtımı başlatmak için sözleşme operatörüyle iletişime geçin."
     },
     "lockNotFound": {
       "title": "Kilit Bulunamadı",
-      "message": "Bu kilit ID'siyle eşleşen bir kilit kaydı bulunamadı.",
+      "message": "Bu kilit kimliğiyle (ID) eşleşen bir kilit kaydı bulunamadı.",
       "recovery": "Kilit ID'sini ve sözleşme adresini doğrulayıp tekrar deneyin."
     },
     "contractPaused": {
       "title": "Sözleşme Duraklatıldı",
-      "message": "Sözleşme, bakım veya acil durum nedeniyle yönetici tarafından duraklatıldı.",
-      "recovery": "İşlemler yeniden başladığında lütfen tekrar deneyin."
+      "message": "Sözleşme bakım veya acil durum nedeniyle yönetici tarafından duraklatıldı.",
+      "recovery": "İşlemler devam ettiğinde lütfen tekrar deneyin."
     }
   },
   "analytics": {
@@ -556,8 +558,8 @@
     "title": "Kilit Oluşturuldu | StellarLock",
     "description": "Kilidiniz Stellar üzerinde başarıyla oluşturuldu.",
     "heading": "Kilit Oluşturuldu!",
-    "subheading": "Tokenleriniz artık zincir üzerinde kilitli.",
-    "vestingActive": "Bir hak ediş (vesting) takvimi aktif.",
+    "subheading": "Tokenlarınız artık zincir üzerinde kilitlendi.",
+    "vestingActive": "Hakediş takvimi aktif.",
     "lockSummary": "Kilit Özeti",
     "lockId": "Kilit ID",
     "copyLockId": "Kilit ID'sini kopyala",
@@ -566,12 +568,12 @@
     "tokenLock": "Token Kilidi",
     "token": "Token",
     "amount": "Miktar",
-    "beneficiary": "Lehtar",
+    "beneficiary": "Yararlanıcı",
     "creator": "Oluşturan",
-    "unlockDate": "Kilit açılış tarihi",
-    "vesting": "Hak ediş",
-    "vestingEnabled": "Doğrusal hak ediş etkin",
-    "createdAt": "Oluşturulma zamanı",
+    "unlockDate": "Kilit açma tarihi",
+    "vesting": "Hakediş",
+    "vestingEnabled": "Doğrusal hakediş etkin",
+    "createdAt": "Oluşturulma tarihi",
     "transactionDetails": "İşlem Ayrıntıları",
     "txHash": "TX Hash",
     "copyTxHash": "İşlem hash'ini kopyala",
@@ -579,8 +581,8 @@
     "network": "Ağ",
     "shareTitle": "Bu kilidi paylaş",
     "copyShareLink": "Paylaşım bağlantısını kopyala",
-    "viewLockDetail": "Kilit Ayrıntısını Görüntüle",
-    "createAnother": "Bir Tane Daha Oluştur",
+    "viewLockDetail": "Kilit Ayrıntılarını Görüntüle",
+    "createAnother": "Yeni Kilit Oluştur",
     "copied": "{{label}} kopyalandı!"
   },
   "txProgress": {

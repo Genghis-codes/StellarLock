@@ -23,7 +23,9 @@
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
     "history": "历史",
-    "analytics": "分析"
+    "analytics": "分析",
+    "mainNavigation": "主导航",
+    "mobileNavigation": "移动端导航"
   },
   "landing": {
     "badge": "基于 Stellar 构建 · Soroban 智能合约",

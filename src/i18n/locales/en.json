@@ -23,7 +23,9 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "history": "History",
-    "analytics": "Analytics"
+    "analytics": "Analytics",
+    "mainNavigation": "Main navigation",
+    "mobileNavigation": "Mobile navigation"
   },
   "landing": {
     "badge": "Built on Stellar · Soroban smart contracts",
